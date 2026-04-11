@@ -1,6 +1,14 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/user.model.js";
 import { sendVerificationEmail } from "../services/mail.service.js";
+/**
+ * Register a new user
+ * @route POST /api/auth/register
+ * @desc Register a new user
+ * @access Public
+ * @body { username: String, email: String, password: String }
+ * @returns { message: String, success: Boolean, user: Object }
+ */
 export async function register(req, res) {
   const { username, email, password } = req.body;
   const ifUserAlreadyExists = await userModel.findOne({
@@ -45,6 +53,97 @@ export async function register(req, res) {
     },
   });
 }
+
+/**
+ * Get current user
+ * @route GET /api/auth/get-me
+ * @desc Get current logged in user
+ * @access Private
+ * @returns { message: String, success: Boolean, user: Object }
+ */
+export async function getMe(req, res) {
+  const userId = req.user.id;
+  const user = await userModel
+    .findById(userId)
+    .select("-password -__v -createdAt -updatedAt");
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+      success: false,
+      err: "user not found",
+    });
+  }
+  res.json({
+    message: "User fetched successfully",
+    success: true,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  });
+}
+
+/**
+ * Login a user
+ * @route POST /api/auth/login
+ * @desc Login a user
+ * @access Public
+ * @body { email: String, password: String }\
+ * @returns { message: String, success: Boolean, token: String }
+ */
+export async function login(req, res) {
+  const { email, password } = req.body;
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(400).json({
+      message: "Invalid email or password",
+      success: false,
+      err: "user not found",
+    });
+  }
+  if (!user.verified) {
+    return res.status(400).json({
+      message: "Please verify your email before logging in",
+      success: false,
+      err: "email not verified",
+    });
+  }
+  const isPasswordValid = await user.comparePassword(password);
+  if (!isPasswordValid) {
+    return res.status(400).json({
+      message: "Invalid email or password",
+      success: false,
+      err: "invalid password",
+    });
+  }
+
+  const token = jwt.sign(
+    { id: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+  res.cookie("token", token);
+  res.json({
+    message: "Login successful",
+    success: true,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  });
+}
+
+/**
+ * @route GET /api/auth/verify-email
+ * @desc Verify user's email
+ * @access Public
+ * @query { token: String }
+ * @returns { message: String, success: Boolean }
+ */
 export async function verifyEmail(req, res) {
   const { token } = req.query;
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
