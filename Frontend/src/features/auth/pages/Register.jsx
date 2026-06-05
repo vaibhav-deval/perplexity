@@ -1,17 +1,24 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router";
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const user = useSelector((state) => state.auth.user);
+  const loading = useSelector((state) => state.auth.loading);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log({ username, email, password });
     // TODO: Implement registration logic
   };
-
+  if(!loading && user){
+    return <Navigate to="/" />
+  }
+  
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <form
