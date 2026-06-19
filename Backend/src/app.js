@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.route.js";
+import chatRouter from "./routes/chat.routes.js";
 import morgan from "morgan";
 import cors from "cors";
 const app = express();
@@ -16,9 +17,10 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   }),
 );
-app.use("/api/auth", authRouter);
 app.get("/", (req, res) => {
   res.json({ message: "Hello from Express with ES modules!" });
 });
+app.use("/api/auth", authRouter);
+app.use("/api/chats", chatRouter);
 
 export default app;
