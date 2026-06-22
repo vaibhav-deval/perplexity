@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useChat } from "../hooks/useChat";
 import { useEffect } from "react";
@@ -6,12 +6,119 @@ import { useEffect } from "react";
 const Dashboard = () => {
   const chat = useChat();
   const user = useSelector((state) => state.auth.user);
-  console.log("User in Dashboard", user);
+  const [messages, setMessages] = useState([
+    { type: "user", content: "Hello, can you explain React hooks?" },
+    {
+      type: "ai",
+      content:
+        "React hooks are functions that let you use state and other React features in functional components. The most common ones are useState and useEffect. Would you like to know more about a specific hook?",
+    },
+    { type: "user", content: "Tell me about useEffect" },
+    {
+      type: "ai",
+      content:
+        "useEffect is a hook that lets you perform side effects in functional components. It runs after the component renders and can be used for data fetching, subscriptions, or manually changing the DOM. It takes a callback function and an optional dependency array.",
+    },
+    { type: "user", content: "How do I prevent infinite loops?" },
+    {
+      type: "ai",
+      content:
+        "To prevent infinite loops in useEffect, you should provide a dependency array as the second argument. If the dependency array is empty [], the effect runs only once after the initial render. If you include dependencies, the effect only runs when those dependencies change.",
+    },
+  ]);
+  const [inputValue, setInputValue] = useState("");
+
   useEffect(() => {
     chat.initializeSocketConnection();
-  },[]);
+  }, []);
 
-  return <div>dashboard</div>;
+  const handleSendMessage = () => {
+    if (inputValue.trim()) {
+      setMessages([...messages, { type: "user", content: inputValue }]);
+      // TODO: Send message to AI service
+      setInputValue("");
+    }
+  };
+
+  return (
+    <main className="h-screen w-full bg-neutral-900 flex">
+      {/* Left Sidebar - Chat History */}
+      <aside className="w-80 bg-neutral-800 border-r border-neutral-700 flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-neutral-700">
+          <h1 className="text-2xl font-semibold text-white">Perplexity</h1>
+        </div>
+
+        {/* Chat List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {[...Array(9)].map((_, index) => (
+            <button
+              key={index}
+              className="w-full px-4 py-3 text-left text-neutral-300 bg-neutral-700 hover:bg-neutral-600 rounded-lg transition-colors duration-200 truncate"
+            >
+              chat title
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 max-w-3/5 text-center mx-auto flex flex-col bg-neutral-900">
+        {/* Header with User Message Area */}
+        <div className="flex justify-end items-center p-6 border-b border-neutral-700">
+          <div className="bg-neutral-700 px-4 py-2 rounded-lg">
+            <span className="text-neutral-300 text-sm">user message</span>
+          </div>
+        </div>
+
+        {/* Messages Display Area */}
+        <div className="flex-1  overflow-y-auto p-8 flex items-center justify-center">
+          <div className="text-center w-full">
+            <div className="mt-8 space-y-4">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    msg.type === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-md px-4 py-2 rounded-2xl ${
+                      msg.type === "user"
+                        ? "bg-blue-600 text-white"
+                        : "bg-neutral-700 text-neutral-300"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="p-6 border-t border-neutral-700">
+          <div className="bg-neutral-700 rounded-lg p-4 flex gap-3">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              placeholder="chat input area"
+              className="flex-1 bg-transparent text-white placeholder-neutral-500 outline-none"
+            />
+            <button
+              onClick={handleSendMessage}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 };
 
 export default Dashboard;
