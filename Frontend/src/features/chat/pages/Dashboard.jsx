@@ -4,38 +4,19 @@ import { useChat } from "../hooks/useChat";
 import { useEffect } from "react";
 
 const Dashboard = () => {
-  const chat = useChat();
-  const user = useSelector((state) => state.auth.user);
-  const [messages, setMessages] = useState([
-    { type: "user", content: "Hello, can you explain React hooks?" },
-    {
-      type: "ai",
-      content:
-        "React hooks are functions that let you use state and other React features in functional components. The most common ones are useState and useEffect. Would you like to know more about a specific hook?",
-    },
-    { type: "user", content: "Tell me about useEffect" },
-    {
-      type: "ai",
-      content:
-        "useEffect is a hook that lets you perform side effects in functional components. It runs after the component renders and can be used for data fetching, subscriptions, or manually changing the DOM. It takes a callback function and an optional dependency array.",
-    },
-    { type: "user", content: "How do I prevent infinite loops?" },
-    {
-      type: "ai",
-      content:
-        "To prevent infinite loops in useEffect, you should provide a dependency array as the second argument. If the dependency array is empty [], the effect runs only once after the initial render. If you include dependencies, the effect only runs when those dependencies change.",
-    },
-  ]);
+  const chats = useChat();
+  const chat = useSelector((state) => state.chat);
+  const currentChatId = useSelector((state) => state.currentChatId);
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
-    chat.initializeSocketConnection();
+    chats.initializeSocketConnection();
   }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (e) => {
+    e.preventDefault();
     if (inputValue.trim()) {
-      setMessages([...messages, { type: "user", content: inputValue }]);
-      // TODO: Send message to AI service
+      chats.handleSendMessage({ message: inputValue, chatId: currentChatId });
       setInputValue("");
     }
   };
@@ -75,7 +56,7 @@ const Dashboard = () => {
         <div className="flex-1  overflow-y-auto p-8 flex items-center justify-center">
           <div className="text-center w-full">
             <div className="mt-8 space-y-4">
-              {messages.map((msg, index) => (
+              {chats[currentChatId]?.messages.map((msg, index) => (
                 <div
                   key={index}
                   className={`flex ${

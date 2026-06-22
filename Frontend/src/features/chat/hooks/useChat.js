@@ -1,15 +1,41 @@
 import { initializeSocketConnection } from "../service/chat.socket";
-import {sendMessage, getChats, getMessages, createChat, deleteChat} from "../service/chat.api"
+import {
+  sendMessage,
+  getChats,
+  getMessages,
+  createChat,
+  deleteChat,
+} from "../service/chat.api";
+import {
+  setChats,
+  setCurrentChatId,
+  setError,
+  setLoading,
+  createNewChat,
+  addNewMessage,
+} from "../chat.slice";
 import { useDispatch } from "react-redux";
 
-export const useChat=()=>{
-    const dispatch = useDispatch();
+export const useChat = () => {
+  const dispatch = useDispatch();
 
-    function handleSendMessage({message, chatId}) {
-        return sendMessage({message, chatId});
-    }
+  async function handleSendMessage({ message, chatId }) {
+    dispatch(setLoading(true));
+    const data = await sendMessage({ message, chatId });
+    const { chat, aiMessage } = data;
+    dispatch(createNewChat({ chatId: chat._id, title: chat.title }));
+    dispatch(
+      addNewMessage({ chatId: chat._id, message: message, role: "user" }),
+    );
+    dispatch(
+      addNewMessage({ chatId: chat._id, message: aiMessage, role: "ai" }),
+    );
 
-    return {
-        initializeSocketConnection,
-    }
-}
+    dispatch(setCurrentChatId(chat._id));
+  }
+
+  return {
+    initializeSocketConnection,
+    handleSendMessage,
+  };
+};

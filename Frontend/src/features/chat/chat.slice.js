@@ -1,14 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { setLoading } from "../auth/auth.slice";
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
-    chats: {},
+    chat: {},
     currentChatId: null,
     isLoading: false,
     error: null,
   },
   reducers: {
+    createNewChat: (state, action) => {
+      const { chatId, title } = action.payload;
+      state.chats[chatId] = {
+        id: chatId,
+        title,
+        messages: [],
+        lastUpdated: new Date().toISOString(),
+      };
+    },
+    addNewMessage: (state, action) => {
+      const { chatId, message, role } = action.payload;
+      state.chats[chatId].messages.push({ content, role });
+    },
     setChats: (state, action) => {
       state.chats = action.payload;
     },
@@ -24,17 +36,13 @@ const chatSlice = createSlice({
   },
 });
 
-// chats = {
-//   "docker and AWS": {
-//     messages: [
-//       { role: "user", content: "how to deploy docker container on AWS?" },
-//       {
-//         role: "ai",
-//         content:
-//           "To deploy a Docker container on AWS, you can use Amazon Elastic Container Service (ECS) or Amazon Elastic Kubernetes Service (EKS). Here are the general steps to deploy using ECS: 1. Create a Docker image of your application and push it to Amazon Elastic Container Registry (ECR). 2. Create an ECS cluster. 3. Define a task definition that specifies the Docker image and resource requirements. 4. Create a service that runs the task definition on the cluster. 5. Configure load balancing and scaling as needed. For EKS, you would set up a Kubernetes cluster and deploy your Docker container using Kubernetes manifests. Both services provide detailed documentation to guide you through the process.",
-//       },
-//     ],
-//     id: "docker and AWS",
-//     lastUpdated: "2024-06-01T12:00:00Z",
-//   },
-// };
+export const {
+  createNewChat,
+  addNewMessage,
+  setChats,
+  setCurrentChatId,
+  setLoading,
+  setError,
+} = chatSlice.actions;
+
+export default chatSlice.reducer;
