@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
-    chat: {},
+    chats: {},
     currentChatId: null,
     isLoading: false,
     error: null,
@@ -18,7 +18,10 @@ const chatSlice = createSlice({
       };
     },
     addNewMessage: (state, action) => {
-      const { chatId, message, role } = action.payload;
+      const { chatId, content, role } = action.payload;
+      if (!state.chats[chatId]) {
+        state.chats[chatId] = { id: chatId, title: "", messages: [], lastUpdated: new Date().toISOString() };
+      }
       state.chats[chatId].messages.push({ content, role });
     },
     setChats: (state, action) => {

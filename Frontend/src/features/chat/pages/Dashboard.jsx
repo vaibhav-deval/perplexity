@@ -4,19 +4,22 @@ import { useChat } from "../hooks/useChat";
 import { useEffect } from "react";
 
 const Dashboard = () => {
-  const chats = useChat();
-  const chat = useSelector((state) => state.chat);
-  const currentChatId = useSelector((state) => state.currentChatId);
+  const chat = useChat();
+  const chats = useSelector((state) => state.chat.chats);
+  const currentChatId = useSelector((state) => state.chat.currentChatId);
   const [inputValue, setInputValue] = useState("");
-
+  
   useEffect(() => {
-    chats.initializeSocketConnection();
+    chat.initializeSocketConnection();
+    chat.handleGetChats();
   }, []);
-
+  
   const handleSendMessage = (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) {
+      e.preventDefault();
+    }
     if (inputValue.trim()) {
-      chats.handleSendMessage({ message: inputValue, chatId: currentChatId });
+      chat.handleSendMessage({ message: inputValue, chatId: currentChatId });
       setInputValue("");
     }
   };
@@ -32,12 +35,12 @@ const Dashboard = () => {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {[...Array(9)].map((_, index) => (
+          {Object.values(chats).map((chat, index) => (
             <button
               key={index}
               className="w-full px-4 py-3 text-left text-neutral-300 bg-neutral-700 hover:bg-neutral-600 rounded-lg transition-colors duration-200 truncate"
             >
-              chat title
+              {chat.title}
             </button>
           ))}
         </div>
@@ -56,21 +59,21 @@ const Dashboard = () => {
         <div className="flex-1  overflow-y-auto p-8 flex items-center justify-center">
           <div className="text-center w-full">
             <div className="mt-8 space-y-4">
-              {chats[currentChatId]?.messages.map((msg, index) => (
+              {(chats?.[currentChatId]?.messages ?? []).map((message, idx) => (
                 <div
-                  key={index}
+                  key={message?.id ?? idx}
                   className={`flex ${
-                    msg.type === "user" ? "justify-end" : "justify-start"
+                    message?.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-md px-4 py-2 rounded-2xl ${
-                      msg.type === "user"
+                      message?.role === "user"
                         ? "bg-blue-600 text-white"
                         : "bg-neutral-700 text-neutral-300"
                     }`}
                   >
-                    {msg.content}
+                    {message?.content ?? ""}
                   </div>
                 </div>
               ))}
