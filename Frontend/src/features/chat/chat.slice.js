@@ -20,9 +20,18 @@ const chatSlice = createSlice({
     addNewMessage: (state, action) => {
       const { chatId, content, role } = action.payload;
       if (!state.chats[chatId]) {
-        state.chats[chatId] = { id: chatId, title: "", messages: [], lastUpdated: new Date().toISOString() };
+        state.chats[chatId] = {
+          id: chatId,
+          title: "",
+          messages: [],
+          lastUpdated: new Date().toISOString(),
+        };
       }
       state.chats[chatId].messages.push({ content, role });
+    },
+    addMessage: (state, action) => {
+      const { chatId, messages } = action.payload;
+      state.chats[chatId].messages.push(...messages);
     },
     setChats: (state, action) => {
       state.chats = action.payload;
@@ -42,6 +51,7 @@ const chatSlice = createSlice({
 export const {
   createNewChat,
   addNewMessage,
+  addMessage,
   setChats,
   setCurrentChatId,
   setLoading,

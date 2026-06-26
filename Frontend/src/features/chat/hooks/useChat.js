@@ -13,38 +13,45 @@ import {
   setLoading,
   createNewChat,
   addNewMessage,
+  addMessage,
 } from "../chat.slice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 export const useChat = () => {
   const dispatch = useDispatch();
+  const chats = useSelector((state) => state.chat.chats);
 
   async function handleSendMessage({ message, chatId }) {
     dispatch(setLoading(true));
     const data = await sendMessage({ message, chatId });
-    const { chat, aiMessage } = data;
-    if (!chatId)
+    const { chat, chatId: responseChatId, aiMessage } = data;
+    const activeChatId = chatId || responseChatId;
+
+    if (!chatId) {
       dispatch(
         createNewChat({
-          chatId: chat._id,
-          title: chat.title,
+          chatId: activeChatId,
+          title: chat?.title ?? "New chat",
         }),
       );
+    }
+
     dispatch(
       addNewMessage({
-        chatId: chatId || chat._id,
+        chatId: activeChatId,
         content: message,
         role: "user",
       }),
     );
     dispatch(
       addNewMessage({
-        chatId: chatId || chat._id,
+        chatId: activeChatId,
         content: aiMessage.content,
         role: aiMessage.role,
       }),
     );
-    dispatch(setCurrentChatId(chat._id));
+    dispatch(setCurrentChatId(activeChatId));
+    dispatch(setLoading(false));
   }
 
   async function handleGetChats() {
@@ -57,7 +64,7 @@ export const useChat = () => {
           acc[chat._id] = {
             id: chat._id,
             title: chat.title,
-            message: [],
+            messages: [],
             lastUpdate: chat.updatedAt,
           };
           return acc;
@@ -67,9 +74,33 @@ export const useChat = () => {
     dispatch(setLoading(false));
   }
 
+  async function handleGetOpenChats(chatId) {
+    if (!chatId) return;
+
+    if (!chats[chatId]?.messages?.length) {
+      dispatch(setLoading(true));
+      const data = await getMessages(chatId);
+      const { messages } = data;
+      const formattedMessages = messages.map((msg) => ({
+        content: msg.content,
+        role: msg.role,
+      }));
+      dispatch(
+        addMessage({
+          chatId,
+          messages: formattedMessages,
+        }),
+      );
+      dispatch(setLoading(false));
+    }
+
+    dispatch(setCurrentChatId(chatId));
+  }
+
   return {
     initializeSocketConnection,
     handleSendMessage,
-    handleGetChats
+    handleGetChats,
+    handleGetOpenChats,
   };
 };
